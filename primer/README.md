@@ -26,9 +26,11 @@ build=$(echo $1 | sed 's=.cc==g')
 
 ## Dir
 
+```
 .
 ├── build           // Compiled binary directory
 ├── ch1             // Code directory for each chapter
 ├── ch2
 ├── chxxx
 └── source-file     // Book source code directory
+```
