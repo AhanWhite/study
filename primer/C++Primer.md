@@ -3686,3 +3686,601 @@ int arr2[sz]; //正确，sizeof返回一个常量表达水
 ```
 
 因为sizeof返回值是一个常量表达式，所以我们可以用sizeof的结果声明数组的维度。
+
+### 4.10 逗号运算符
+
+逗号运算符由两个运算对象，按照从左向右的顺序依次求值。和逻辑与逻辑或以及条件运算符一样，逗号运算符也规定了运算对象求值的顺序。
+
+对于逗号运算符来说，首先对左侧的表达式求职，然后把求值结果丢弃掉。逗号运算符真正的结果是右侧表达式的值，如果右侧运算对象是左值，那么最终的求值结果也是左值。
+
+逗号运算符经常被用在for循环当中
+
+```c++
+vector<int>::size_type cnt = ivec.size();
+// 将把从size到1的值赋给ivec的元素
+for(vector<int>::size_type ix = 0; ix != ivec.size(); ++ix, --cnt)
+    ivec[ix] = cnt;
+```
+
+这个循环在for语句的表达式中递增ix，递减cnt，每次循环迭代xi和cnt相应改变。只要ix满足条件，我们就把当前元素设成cnt的当前值。
+
+### 4.11 类型转换
+
+在C++语言中，某些类型之间有关联。如果两种类型之间有关联，那么当程序中需要其中一种类型的运算对象时，可以用另一种关联类型的对象或值来替代。换句话说，如果两种类型可以相互转换，那么他们就是关联的。
+
+举个例子，考虑一下这条表达式，它的目的是将ival初始值初始化为6
+
+```c++
+int ival = 3.351 + 3; // 编译器可能会警告该运算丢失了精度
+```
+
+加法的两个运算对象不同，3.351是double类型，3的类型是int。C++语言不会直接将两个不同类型的值相加，而是先根据类型转换规则设法将运算对象的类型同一后再求值。上述的类型转换是自动执行的，无需程序员的介入，有时甚至无需程序员去了解。因此它们被称为隐式转换。
+
+算术类型之间的隐式转换被设计的尽可能避免损失精度。很多时候，如果表达式中既有整数类型的运算对象也有浮点数类型的运算对象，整型会转换成浮点型。上面的例子中3转换成double，然后浮点数相加，所得结果是double类型。
+
+接下来就要完成初始化的任务了，在初始化过程中，因为被初始化的对象的类型无法改变，所以初始值被转换成该对象的类型。仍以这个例子说明，加法运算得到的double类型的结果被转换成int类型的值，这个值被用来初始化ival。由double向int转换时忽略掉了小数部分。上面的表达式中，数值6倍赋给了ival。
+
+何时发生隐式类型转换
+
+在下面这些情况下，编译器会自动的转换运算对象的类型：
+
+- 在大多数情况下，比int类型小的整型值首先提升为较大的整数类型
+- 在条件中，非布尔值转换成布尔类型
+- 初始化过程中，初始值转换成变量的类型；在赋值语句中，右侧运算对象转换成左侧运算对象的类型
+- 如果算术运算或关系运算的运算对象有多种类型，需要转换成同一种类型
+- 如第6章将要介绍的，函数调用时也将发生类型转换。
+
+#### 4.11.1 算术转换
+
+算术转换的含义就是把一种算术类型转换成了另一种算术类型。算术转换的规则定义了一套类型转换的层次，其中运算符的运算对象将转换成最宽的类型。例如，如果一个运算对象的类型是long double，那么不论另外一个运算对象是什么类型都会被转换成long double。还有一中更普遍的情况，当表达式中既有浮点型也有整数类型时，整数值将转换成相应的浮点类型。
+
+整型提升
+
+整型提升负责把小整数类型转换成较大的整数类型。对于bool、char、signed char、unsigned char、short和unsigned short等类型来说，只要它们所有可能的值都存在int里，它们就会提升成int类型；否则，提升成unsigned int类型。就我们熟知的，布尔值会提升成0或1.
+
+较大的char类型(wchar_t、char16_t、char32_t)提升成int、unsigned int、long、unsigned long、long long、unsigned long long中最小的一种类型，前提是转换后的类型要能容纳原类型所有可能的值。
+
+无符号类型的运算对象
+
+如果某个运算符的运算对象不一致，这些运算对象将转换成同一种类型。但是如果某个运算对象的类型是无符号类型，那么转换的结果就要依赖于机器中各个整数类型的相对大小了。
+
+像往常一样，首先执行整型提升。如果结果的类型匹配，无需进行进一步的转换。如果两个(提升后的)运算对象的类型要么都是带符号的，要么都是无符号的，则小类型的运算对象转换成较大的类型。
+
+如果一个运算对象是无符号类型，另外一个是带符号类型，而且其中的无符号类型不小于带符号类型，那么带符号的运算对象转换成无符号的。例如，假设两个类型分别是unsigned int和int，则int类型的运算对象转换成unsigned int类型。需要注意的是，如果int型的值刚好是负值，其结果将以2.1.2节介绍的方法转换，并带来该节描述的所有副作用。
+
+剩下的情况是带符号类型大于无符号类型，此时转换的结果依赖于机器。如果无符号类型的所有值都能存储在该带符号类型中，则无符号类型的运算对象转换成带符号类型。如果不能，那么带符号类型的运算对象转换成无符号类型。例如，如果两个运算对象的类型分别是long和unsigned int，并且int和long的大小相同，则long类型的运算对象转换成unsigned int类型；如果long类型占用的空间比int更多，则unsigned int类型的运算对象转换成long型。
+
+理解算术转换
+
+要理解算术转换，办法之一就是研究大量的例子：
+
+```c++
+bool	flag;	char			cval;
+short	sval;	unsigned short	usval;
+int		ival;	unsigned int	uival;
+long	lval;	unsigned long	ulval;
+float	fval;	double			dval;
+3.14159L + 'a';	// double：'a'转成int后，再从int转成long double
+dval + ival;	// double：ival转成double
+dval + fval;	// double：float转成double
+ival = dval;	// int: double转成int
+flag = dval;	// float：dval为0则转为false，其他转为true
+cval + fval;	// float：char转int，再从int转到float  *
+sval + cval;	// int：char转int，short转int *
+cval + lval;	// long：char转int，再从int转到long
+ival + ulval;	// unsigned long：int转成unsigned long（无符号ul不小于带符号i
+usval + ival;	// 根据unsigned short和int所占空间的大小进行提升
+uival + lval;	// 根据unsigned int和long所占空间的大小进行提升
+```
+
+#### 4.11.2 其他隐式类型转换
+
+除了算术转换之外还有几种隐式类型转换，包括一下几种：
+
+**数组转成指针**：在大多数用到数组的表达式中，数组自动转换成指向数组首元素的指针：
+
+```c++
+int ia[10]; // 含有10个整数的数组
+int *ip = ia; // ia转换成指向数组首元素的指针
+```
+
+当数组被用作decltype关键字的参数，或者作为取地址符(&)、sizeof及typeid等运算符的运算对象时，上述转换不会发生。同样的，用一个引用来初始化数组，上述转换也不会发生。6.7节将提到，当在表达式中使用函数类型时会发生类似的指针转换。
+
+**指针的转换**：C++还规定了几种其他的指针转换方式，包括常量整数值0或者字面值nullptr能转换成任意指针类型；指向任意非常量的指针能转换成void\*；指向任意对象的指针能转换成const void\*。15.2.2节 将介绍，在有几成关系的类型间还有另外一种指针转换的方式
+
+**转换成布尔类型值**：存在一种从算数类型或指针类型自动转换成布尔类型的机制。如果指针类型或算术类型的值为0，转换结果是false，否则结果是true
+
+```c++
+char *cp = get_string();
+if (cp) {} // 如果指针cp不是0，条件为真
+while (*cp) {} // 如果*cp不是空字符，条件为真
+```
+
+**转换成常量**：允许将指向非常量类型的指针转换成指向相应对常量类型的指针，对于引用也是这样。也就是说，如果T是一种类型，我们就能将指向T的指针或引用分别转换成指向const T的指针或引用
+
+```c++
+int i;
+const int &j = i;	// 非常量转换成你const int的引用
+const int *p = &i;	// 非常量的地址转换成const的地址
+int &r = j, *q = p;	// 错误：不允许const转换成非常量
+```
+
+相反的转换并不存在，因为他试图删除掉底层const
+
+**类类型定义的转换**：类类型能定义由编译器自动执行的转换，不过编译器每次只能执行一种类类型的转换。在7.5.4节中我们将看到一个例子，如果同时提出多个转换请求，这些请求将被拒绝。
+
+我们之前的程序已经使用过类类型转换。一处是在需要标准库string类型的地方使用C风格字符串；另一处是在条件部分读入istream：
+
+```c++
+string s, t = "a value"; // 字符串字面值转换成string类型
+while (cin >> s) {} // while条件部分把cin转换成布尔值
+```
+
+条件(cin >> s)读入cin的内容并将cin作为其求值结果。条件部分本来需要一个布尔类型的值，但这里实际检查的是istream类型的值。幸好，IO库定义了从istream向布尔值类型的规则，根据这一规则，cin自动的转换成布尔值。所得的布尔值到底是什么由输入流的状态决定，如果最后一次读入成功，转换得到的不二虎子是true；相反，如果最后一次读取不成功，转换得到的布尔值是false。
+
+#### 4.11.3 显示转换
+
+有时候我们希望显示的将对象强制转换成另外一种类型。例如，如果想在下面的代码中执行浮点数除法：
+
+```c++
+int i, j;
+double sloape = i/j;
+```
+
+就要使用某种方法将i和/或j显示的转换成double，这种方法称作强制类型转换。
+
+> 虽然有时候不得不使用强制类型转换，但这种方法本质上是非常危险的
+
+命名的强制类型转换
+
+一个命名的强制类型转换具有如下形式：
+
+```c++
+cast-name<type>(expression)
+```
+
+其中，type是转换的目标类型而expression是要转换的值。如果type是引用类型，则结果是左值。cast-name是**static_cast**、**dynamic_cast**、**const_cast**和**reinterpret_cast**中的一种。dynamic_cast支持运行时类型识别，我们将在19.2节对其做更详细的介绍。cast-name指定了执行的是哪种转换。
+
+**static_cast**
+
+任何具有明确意义的类型转换，只要不包含底层const，都可以使用static_cast。例如，通过将一个运算对象强制转换成double类型就可以使表达式执行浮点数除法：
+
+```c++
+double slope = static_cast<double>(j) / i;
+```
+
+当需要把一个较大的算术类型赋值给较小的类型时，static_cast非常有用。此时，强制类型转换告诉程序的读者和编译器：我们知道并且不在乎潜在的精度丢失。一般来说，如果编译器发现一个较大的算术类型试图赋值给较小的类型，就会给出警告信息；但是当我们执行了显示的类型转换之后，警告信息就会被关闭了。
+
+static_cast对于编译器无法自动执行的类型转化也非常有用。例如，我们可以使用static_cast找回存在于void*指针中的值：
+
+```c++
+void *p = &d; // 正确，任何非常量对象的地址都可以存入void*
+// 正确，将void*转换回初始的指针类型
+double *dp = static_cast<double>(p);
+```
+
+当我们把指针存放在void*中，并且使用static_cast将其强制转换回原来的类型时，应确保指针的值保持不变。也就是说，强制转换的结果与原始的地址值相等，因此我们必须确保转换后所得的类型就是指针所指的类型。类型一旦不符，将产生未定义的后果。
+
+**const_cast**
+
+const_cast只能改变对象的底层const
+
+```c++
+const char *pc;
+char *p = const_cast<char*>(pc); // 正确，但是通过p写值是未定义的行为
+```
+
+对于将常量对象转换成非常量对象的行为，我们一般称其为"去掉const性质"。一旦我们去掉了某个对象的const性质，编译器就不在阻止我们对该对象进行写操作了。如果对象本身不是一个常量，使用强制类型转换获得写权限是合法的行为。然而如果对象是一个常量，在使用const_cast执行写操作就会产生未定义的后果。
+
+只有const_cast能改变表达式的常量属性，使用其他形式的命名强制类型转换改变表达式的常量属性会引发编译器错误。同样的，也不能使用const_cast改变表达式的类型：
+
+```c++
+const char *cp;
+// 错误，static_cast不能转换掉const性质
+char *q = static_cast<char*>(cp);
+static_cast<string>(cp); // 正确，字符串字面值转换成string类型
+const_cast<string>(cp);// 错误，const_cast只能改变常量属性
+```
+
+const_cast常常用于有函数重载的上下文中，关于函数重载将在6.4节进行详细介绍。
+
+**reinterpret_cast**
+
+reinterpret_cast通常为运算对象的位模式提供较低层次的重新解释。举个例子，假设有如下的转换：
+
+```c++
+int *ip;
+char *pc = reinterpret_cast<char*>(ip);
+```
+
+我们必须牢记pc所指的对象是一个int而非字符，如果把pc当成普通的字符指针使用就可能在运行时引发错误。如
+
+```c++
+string str(pc);
+```
+
+可能导致异常的运行时行为
+
+使用reinterpret_cast是非常危险的，用pc初始化str的例子很好的证明了这一点。其中的关键问题是类型改变了，但编译器没有给出任何错误的提示信息。当我们用一个int的地址初始化pc时，由于显示的声称这种转换合法，所以编译器不会发出任何警告或错误信息。接下来再使用pc时就会认定他的值是char*类型，编译器没法知道它实际存放的是int的指针。最终的结果是，在上面的例子中虽然用pc初始化str没什么意义，甚至还可能引发更糟糕的后果，但仅从语法上而言这种才做无可指摘。查找这类问题的原因非常困难，如果将ip强制转换成pc的语句和用pc初始化string对象的语句分数不同文件就更是如此。
+
+> reinterpret_cast本质上就依赖于机器。想要安全的使用reinterpret_cast必须对设计的类型和编译器实现转换的过程都非常了解。
+
+> 避免强制类型转换
+>
+> 强制类型转换干扰了正常的类型检查，因此我们强烈建议程序员笔面试使用强制类型转换。这个建议对于reinterpret_cast尤为适用，因为此类类型转换总是充满了风险。在有重构函数的上下文中使用const_cast无可厚非，关于这一点在6.4中详细介绍，但是在其他情况下使用const_cast也就意味着程序存在某种设计缺陷。其他强制类型转换，比如static_cast和dynamic_cast。都不应该频繁使用。每次书写强制类型转换语句，都应该反复的斟酌能否以其他方式实现相同的目标。就算是在无法避免，也应该尽量限制类型转换值的作用域，并且记录对相关类型的所有假定，这样可以减少错误发生的机会。
+
+旧式的类型转换
+
+在早起的C++语言中，显示的强制类型转换包含两种形式：
+
+```c++
+type (expr); // 函数形式的强制类型转换
+(type) expr; // C风格的强制类型转换
+```
+
+根据所涉及类型的不同，旧式的强制类型转换分别具有与const_cast、static_cast和reinterpret_cast相似的行为。当我们在某处执行旧式的强制类型转换时，如果换成const_cast和static_cast也合法，其行为与对于的命名转换一致。如果替换后不合法，则旧式强制类型转换执行与reinterpret_cast类似的功能：
+
+```c++
+char *pc = (char*) ip; // ip是指向整数的指针
+```
+
+的效果与使用reinterpret_cast一样
+
+> 与命名的强制类型转换相比，旧式的强制类型转换从表现形式上来说不是那么清晰明了，容易被看漏，所以一旦转换过程出现问题，追踪起来也更加困难
+
+### 4.12 运算符优先级表
+
+<table>
+  <tr>
+    <th style="text-align: center;" colspan=6>表 4.4: 运算符优先级</th>
+  </tr>
+  <tr style="border-bottom: double;">
+    <th>结合律</th>
+    <th>运算符</th>
+    <th>功能</th>
+    <th>用法</th>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>::</td>
+    <td>全局作用域</td>
+    <td>::name</td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>::</td>
+    <td>类作用域</td>
+    <td>class::name</td>
+  </tr>
+  <tr style="border-bottom: double;">
+    <td>左</td>
+    <td>::</td>
+    <td>命名空间作用域</td>
+    <td>namspace::name</td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>.</td>
+    <td>成员选择</td>
+    <td>object.member</td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>-></td>
+    <td>成员选择</td>
+    <td>pointer->member</td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>[]</td>
+    <td>下标</td>
+    <td>expr[expr]</td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>()</td>
+    <td>函数调用</td>
+    <td>name(expr_list)</td>
+  </tr>
+  <tr style="border-bottom: double;">
+    <td>左</td>
+    <td>()</td>
+    <td>类型构造</td>
+    <td>type(expr_list)</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>++</td>
+    <td>后置递增运算</td>
+    <td>lvalue++</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>--</td>
+    <td>后置递减运算</td>
+    <td>lvalue--</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>typeid</td>
+    <td>类型ID</td>
+    <td>typeid(type)</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>typeid</td>
+    <td>运行时类型ID</td>
+    <td>typeid(expr)</td>
+  </tr>
+  <tr style="border-bottom: double;">
+    <td>右</td>
+    <td>explicit cast</td>
+    <td>类型转换</td>
+    <td>cast_name&lt;type&gt;(expr)</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>++</td>
+    <td>前置递增运算</td>
+    <td>++lvalue</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>--</td>
+    <td>前置递减运算</td>
+    <td>--lvalue</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>~</td>
+    <td>位取反</td>
+    <td>~expr</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>逻辑非</td>
+    <td>!</td>
+    <td>!expr</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>-</td>
+    <td>一元负号</td>
+    <td>-expr</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>+</td>
+    <td>一元正号</td>
+    <td>+expr</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>*</td>
+    <td>解引用</td>
+    <td>*expr</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>&</td>
+    <td>取地址</td>
+    <td>&lvalue</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>()</td>
+    <td>类型转换</td>
+    <td>(type) expr</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>sizeof</td>
+    <td>对象的大小</td>
+    <td>sizeof expr</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>sizeof</td>
+    <td>类型的大小</td>
+    <td>sizeof(type)</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>sizeof</td>
+    <td>参数包的大小</td>
+    <td>sizeof...(name)</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>new</td>
+    <td>创建对象</td>
+    <td>new type</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>new[]</td>
+    <td>创建数组</td>
+    <td>new type[]</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>delete</td>
+    <td>释放对象</td>
+    <td>delete expr</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>delete[]</td>
+    <td>释放数组</td>
+    <td>delete[] expr</td>
+  </tr>
+  <tr style="border-bottom: double;">
+    <td>右</td>
+    <td>noexcept</td>
+    <td>能否抛出异常</td>
+    <td>noexcept(expr)</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>->*</td>
+    <td>指向成员选择的指针</td>
+    <td>ptr->*ptr_to_member</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>.*</td>
+    <td>指向成员选择的指针</td>
+    <td>obj.*ptr_to_member</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>*</td>
+    <td>乘法</td>
+    <td>expr * expr</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>/</td>
+    <td>除法</td>
+    <td>expr / expr</td>
+  </tr>
+  <tr style="border-bottom: double;">
+    <td>右</td>
+    <td>%</td>
+    <td>取模</td>
+    <td>expr % expr</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>+</td>
+    <td>加法</td>
+    <td>expr + expr</td>
+  </tr>
+  <tr style="border-bottom: double;">
+    <td>右</td>
+    <td>-</td>
+    <td>减法</td>
+    <td>expr - expr</td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td><<</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>>></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td><</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td><=</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>></td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>>=</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>==</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>!=</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>&</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>^</td>
+    <td></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>|</td>
+    <td>位或</td>
+    <td></td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>&&</td>
+    <td>逻辑与</td>
+    <td>expr && expr</td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>||</td>
+    <td>逻辑或</td>
+    <td>expr || expr</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>? :</td>
+    <td>条件</td>
+    <td>expr ? expr : expr</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>=</td>
+    <td>赋值</td>
+    <td>lvalue = expr</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>*=, /=, %=</td>
+    <td rowspan=4>复合赋值</td>
+    <td rowspan=4>lvalue += expr等</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>+=, -=</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td><<=, >>=</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>&=, |=, ^=</td>
+  </tr>
+  <tr>
+    <td>右</td>
+    <td>throw</td>
+    <td>抛出异常</td>
+    <td>throw expr</td>
+  </tr>
+  <tr>
+    <td>左</td>
+    <td>,</td>
+    <td>逗号</td>
+    <td>expr, expr</td>
+  </tr>
+</table>
+
