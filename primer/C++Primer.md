@@ -4165,88 +4165,88 @@ char *pc = (char*) ip; // ip是指向整数的指针
   <tr>
     <td>左</td>
     <td><<</td>
-    <td></td>
-    <td></td>
+    <td>左移</td>
+    <td>expr << expr</td>
   </tr>
-  <tr>
+  <tr style="border-bottom: double;">
     <td>左</td>
     <td>>></td>
-    <td></td>
-    <td></td>
+    <td>右移</td>
+    <td>expr >> expr</td>
   </tr>
   <tr>
     <td>左</td>
     <td><</td>
-    <td></td>
-    <td></td>
+    <td>小于</td>
+    <td>expr < expr</td>
   </tr>
   <tr>
     <td>左</td>
     <td><=</td>
-    <td></td>
-    <td></td>
+    <td>小于等于</td>
+    <td>expr <= expr</td>
   </tr>
   <tr>
     <td>左</td>
     <td>></td>
-    <td></td>
-    <td></td>
+    <td>大于</td>
+    <td>expr > expr</td>
   </tr>
-  <tr>
+  <tr style="border-bottom: double;">
     <td>左</td>
     <td>>=</td>
-    <td></td>
-    <td></td>
+    <td>大于等于</td>
+    <td>expr >= expr</td>
   </tr>
   <tr>
     <td>左</td>
     <td>==</td>
-    <td></td>
-    <td></td>
+    <td>相等</td>
+    <td>expr == expr</td>
   </tr>
-  <tr>
+  <tr style="border-bottom: double;">
     <td>左</td>
     <td>!=</td>
-    <td></td>
-    <td></td>
+    <td>不相等</td>
+    <td>expr != expr</td>
   </tr>
-  <tr>
+  <tr style="border-bottom: double;">
     <td>左</td>
     <td>&</td>
-    <td></td>
-    <td></td>
+    <td>位与</td>
+    <td>expr & expr</td>
   </tr>
-  <tr>
+  <tr style="border-bottom: double;">
     <td>左</td>
     <td>^</td>
-    <td></td>
-    <td></td>
+    <td>位异或</td>
+    <td>expr ^ expr</td>
   </tr>
-  <tr>
+  <tr style="border-bottom: double;">
     <td>左</td>
     <td>|</td>
     <td>位或</td>
-    <td></td>
+    <td>expr | expr</td>
   </tr>
-  <tr>
+  <tr style="border-bottom: double;">
     <td>左</td>
     <td>&&</td>
     <td>逻辑与</td>
     <td>expr && expr</td>
   </tr>
-  <tr>
+  <tr style="border-bottom: double;">
     <td>左</td>
     <td>||</td>
     <td>逻辑或</td>
     <td>expr || expr</td>
   </tr>
-  <tr>
+  <tr style="border-bottom: double;">
     <td>右</td>
     <td>? :</td>
     <td>条件</td>
     <td>expr ? expr : expr</td>
   </tr>
-  <tr>
+  <tr style="border-bottom: double;">
     <td>右</td>
     <td>=</td>
     <td>赋值</td>
@@ -4255,8 +4255,8 @@ char *pc = (char*) ip; // ip是指向整数的指针
   <tr>
     <td>右</td>
     <td>*=, /=, %=</td>
-    <td rowspan=4>复合赋值</td>
-    <td rowspan=4>lvalue += expr等</td>
+    <td rowspan=4 style="border-bottom: double;">复合赋值</td>
+    <td rowspan=4 style="border-bottom: double;">lvalue += expr等</td>
   </tr>
   <tr>
     <td>右</td>
@@ -4266,11 +4266,11 @@ char *pc = (char*) ip; // ip是指向整数的指针
     <td>右</td>
     <td><<=, >>=</td>
   </tr>
-  <tr>
+  <tr style="border-bottom: double;">
     <td>右</td>
     <td>&=, |=, ^=</td>
   </tr>
-  <tr>
+  <tr style="border-bottom: double;">
     <td>右</td>
     <td>throw</td>
     <td>抛出异常</td>
@@ -4284,3 +4284,334 @@ char *pc = (char*) ip; // ip是指向整数的指针
   </tr>
 </table>
 
+## 5 语句
+
+通常情况下，语句是顺序执行的。但除非是最简单的程序，斗则仅有顺序执行远远不够。因此，C++语言提供了一组控制流语句以支持更复杂的执行路径
+
+### 5.1 简单语句
+
+C++语言中的大多数语句都以分号结束，一个表达式，比如ival + 6，末尾加上分号，就变成了表达式语句。表达式语句的作用是执行表达式并丢掉求值结果。
+
+```C++
+ival + 5; // 一条没什实际用处的表达式语句
+cout << ival; // 一条有用的表达式语句
+```
+
+第一条语句没什么用处，因为虽然执行了加法，但是相加的结果却没有被使用。比较普遍的情况是，表达式语句中的表达式在求值时附带有其他效果，比如给变量赋了新值或者或者输出了结果。
+
+空语句
+
+最简单的语句是空语句，空语句只含有一个单独的分号：
+
+```c++
+; // 空语句
+```
+
+如果在程序的某个地方，语法上需要一条语句但是逻辑上不需要，此时应该使用空语句。一种常见的情况是，当循环的全部工作在条件部分就可以完成时，我们通常会用到空语句。例如，我们想读取输入流的内容直到遇到一个特定值时为止，除此之外什么事情也不做
+
+```c++
+// 重复读入数据直至达到文件末尾或某次输入的值等于sought
+while (cin >> s && s != sought)
+    ; // 空语句
+```
+
+while循环的条件部分首先从标准输入读取一个值并隐式的检查cin，判断读取是否成功。假定读取成功，条件的后半部分检查读进来的值是否等于sought的值。如果发现了想要的值，循环终止；否则从cin中继续读取另一个值，再一次判断循环的条件。
+
+> 使用空语句时应该加上注释，从而令读这段代码的人知道该语句是有意省略的
+
+别漏写分号，也别多写分号
+
+因为空语句时一条语句，所以可以用在任何使用语句的地方。由于这个原因，某系而看起来非法的分号往往只是一条空语句而已，从语法上说得过去。下面的片段包含两条语句：表达式语句和空语句。
+
+```c++
+ival = v1 + v2;// 正确，第二个分号表示一条多余的空语句
+```
+
+多余的空语句一般来说是无害的，但是如果在if或者while的条件后面跟了一个额外的分号就可能完全改变程序员的初衷。例如，下面的代码将无休止的循环下去：
+
+```c++
+// 出现了糟糕的情况：额外的分号，循环体是那条空语句
+while (iter != svec.end()) ; // while循环体是这条空语句
+	++iter; // 递增运算不属于循环的一部分
+```
+
+虽然从形式上来看执行递增语句的前面有缩进，但它并不是循环的一部分，循环条件后面跟着的分号构成了一条空语句，它才是真正的循环体。
+
+> 多余的空语句并非总是乌海的
+
+复合语句(块)
+
+复合语句是指被花括号括起来的(可能为空)的语句和声明的序列，复合语句也被称作块。一个块就是一个作用域，在块中引入的名字只能在块内部以及嵌套在块中的子块里访问，通常，名字在有限的区域内可见，该区域从名字定义处开始，到名字所在的(最内层)块你的结尾为止。
+
+如果在程序的某个地方，语法上需要一条语句，但是逻辑上需要多条语句，则应该使用复合语句。例如，while或for的循环体必须是一条语句，但是我们常常需要在循环体内做很多事情，这是就需要将多条语句用花括号括起来，从而把语句序列转变成块。
+
+> 块不以分号为结束
+
+所谓空块，是指内部没有任何语句的一堆花括号。空块的作用等价于空语句:
+
+```c++
+while (cin >> s && s != sought)
+{} // 空块
+```
+
+### 5.2 语句作用域
+
+可以在if、switch、while和for语句的控制结构内定义变量。定义在控制结构当中的变量只在相应语句的内部可见，一旦语句结束，变量也就超出其作用范围了
+
+```c++
+while (int i = get_num()) // 每次迭代创建并初始化i
+    cout << i << endl;
+i = 0; //错误，在循环外无法访问i
+```
+
+如果其他代码也需要访问控制变量，则变量必须定义在语句的外部
+
+```c++
+// 寻找第一个负值元素
+auto beg = v.begin();
+while (beg != v.end() && *beg >= 0)
+    ++beg;
+if (beg == v.end())
+    // 此时我们知道v中的所有元素都大于等于0
+```
+
+因为控制结构定义的对象马上要由结构本身使用，所以这些变量必须初始化
+
+### 5.3 条件语句
+
+C++语言提供了两种按条件执行的语句，一种是if语句，它根据条件决定控制流；另外一种是switch语句，它计算一个整型表达式的值，然后根据这个值从几条执行路径中选择一条。
+
+#### 5.3.1 if语句
+
+if语句的作用是：判断一个指定的条件是否为真，根据判断结果决定是否执行下一条语句。if语句包括两种形式：一种含有else分支，另外一种没有。
+
+```c++
+// 简单if语句的语法形式
+if (condition)
+    statement;
+// if else语句的语法形式
+if (condition)
+    statement;
+else
+    statement2;
+```
+
+在这两个版本的if语句中，condition都必须用圆括号包围起来。condition可以是一个表达式，也可以是一个初始化了的变量声明。不管是表达式还是变量，其类型都能转换成布尔类型。通常情况下，statement是块语句。
+
+使用if else语句
+
+```c++
+const vector<string> scores = {'F','D','C','B,','A','A++'};
+// 如果grade小于60，对应的字母时F，否则计算其下标
+string lettergrade;
+if (grade < 60)
+    lettergrade = scores[0];
+else
+    lettergrade = scores[(grade - 50)/10]; 
+```
+
+嵌套if语句
+
+```c++
+// 如果grade合格，对合格的成绩后添加一个加号或减号
+if (grade < 60)
+    lettergrade = scores[0];
+else {
+    lettergrade = scores[(grade - 50)/10];  // 获得字母形式的成绩
+    if (grade != 100) // 只要不是A++, 就考虑添加减号
+        if (grade % 10 > 7)
+            lettergrade += '+';
+    	else if (grade % 10 < 3)
+            lettergrade += '-';
+}
+```
+
+注意使用花括号
+
+悬垂else
+
+当一个if语句嵌套在另一个if语句内部时，很可能if分支会多余else分支。事实上，之前那个成绩转换的程序就有4个if分支，而只有2个else分支。这时候问题出现了，我们怎么知道某个给定的else和哪个if匹配呢？
+
+这个问题通常被称为悬垂else，在那些既有if语句又有if else语句的变成语言中是个普遍存在的问题。不同语言解决该问题的思路也不同，就C++而言，它规定else与离它最近的未匹配的if匹配，从而消除了程序的二义性。
+
+当代码中if分支多余else分支时，程序员有时会感觉比较麻烦。举个例子：
+
+```c++
+// 错误：实际的执行并非像缩进格式显示的那样；else分支匹配的是内层if语句
+if (grade % 10 >= 3)
+    if (grade % 10 > 7)
+        lettergrade += '+';
+else
+    lettergrade += '-';
+```
+
+从代码的缩进格式来看，程序的初衷应该是希望else和外层的if匹配，也就是说，我们希望当grade小于3时执行else分支。然而，不管我们什么意图，也不管程序如何缩进，这里的else分支其实是内层if语句的一部分。最终，上面的代码将在末位大于3小于7的成绩后面添加减号。它的执行过程实际上等于如下形式：
+
+```c++
+// 缩进格式与执行过程相符，但不是程序员的意图
+if (grade % 10 >= 3)
+    if (grade % 10 > 7)
+        lettergrade += '+';
+    else
+        lettergrade += '-';
+```
+
+使用花括号控制执行路径
+
+要想使else分支与外层的if语句匹配起来，可以在内层if语句的两端家伙加上花括号，使其称为一个块：
+
+```c++
+if (grade % 10 >= 3) {
+    if (grade % 10 > 7)
+        lettergrade += '+';
+} else
+    lettergrade += '-';
+```
+
+语句属于块，意味着语句一定在块的边界之内，因此内层if'语句在关键字else前面的那个花括号处已经结束了。else不会再作为内层if的一部分。此时，最近的尚未匹配的if是外层if，也就是我们希望else匹配的那个。
+
+#### 5.3.2 switch语句
+
+switch语句提供了一条遍历的途径使得我们能够在若干固定选项中做出选择。举个例子，统计一段文本中各个元音出现的次数：
+
+```c++
+// 为每个原因字母初始化计数值
+unsigned aCnt = 0, eCnt = 0, iCnt = 0, oCnt = 0, uCnt = 0;
+char ch;
+while (cin >> ch) {
+    switch (ch) {
+        case 'a':
+            ++aCnt;
+            break;
+        case 'e':
+            ++eCnt;
+            break;
+        case 'i':
+            ++iCnt;
+            break;
+        case 'o':
+            ++oCnt;
+            break;
+        case 'u':
+            ++uCnt;
+            break;
+    }
+}
+```
+
+switch语句首先对括号里的表达式进行求值，该表达式紧跟在关键字switch后面，可以是一个初始化的变量声明。表达式的值转换成整数类型，然后与每个case标签的值比较。如果表达式和某个case标签的值匹配成功，程序从该标签之后的第一条语句开始执行，直到到达了switch的结尾或者遇到一条break语句为止。
+
+简而言之，break语句的作用就是终端当前的控制流。此例中，break语句将控制权转移到switch语句外面。因为switch是while循环体内唯一的语句，所以从while语句中终端出来以后，程序的控制权将移到while语句的右花括号处。此时while语句内部没有其他语句要执行，所以while会返回去再判断条件是否满足。
+
+如果一个switch条件也没满足，则直接跳到下一条语句。
+
+case关键字和它对应的值一起被称为case标签。case标签必须是整型常量表达式
+
+```c++
+char ch = getVal();
+int ival = 23;
+switch (ch) {
+    case 3.14: // 错误，case标签不是一个整数
+    case ival: // 错误，case标签不是一个整数
+}
+```
+
+任何两个case标签的值都不能相同，否则就会引发错误。另外，default也是一种特殊的case标签。
+
+switch内部的控制流
+
+如果某个case标签匹配成功，将从改标签开始往后顺序执行所有case分支，除非程序显示的中断了这一过程，否则直到switch的结尾处才会停下来。要想避免执行后续case分支的代码，我们必须显示的告诉编译器终止执行过程。大多数情况下，在下一个case标签开始之前应该有一个break语句。
+
+然而有时候默认的switch行为才是程序真正需要的。每个case标签只能对应掉一个值，但是有时候我们希望两个或更多个值共享同一组操作。此时我们就故意省略掉break语句，使得程序能够连续执行若干个case标签。
+
+例如，也许我们想统计的是所有元音字母出现的总次数：
+
+```c++
+switch (ch) {
+    case 'a':
+    case 'e':
+    case 'i':
+    case 'o':
+    case 'u':
+        ++vowelCnt;
+        break;
+}
+```
+
+在上面的代码中，几个case标签连写在一起，中间没有break语句。因此只要ch是元音字母，不管到底是哪个，都执行相同的代码。
+
+C++程序比较自由，所以case标签之后不一定非得换行。把几个case标签写在一行里，强调这些case代表的是某个范围的值：
+
+```c++
+switch (ch) { // 另一种合法的书写形式
+    case 'a': case 'e': case 'i': case 'o': case 'u':
+        ++vowelCnt;
+        break;
+}
+```
+
+> 一般不要省略case分支最后的break语句。如果没写break语句，最好加一段注释说清楚逻辑
+
+漏写break容易引发缺陷
+
+有一种常见的错觉就是以为程序只执行匹配成功的哪个case分支的语句。
+
+default标签
+
+如果没有任何一个case标签能匹配上switch表达式的值，程序将执行紧跟在default标签后的语句。例如，可以添加一个统计非元音字母的数量，只需要加一个default分支即可：
+
+```c++
+switch (ch) { // 另一种合法的书写形式
+    case 'a': case 'e': case 'i': case 'o': case 'u':
+        ++vowelCnt;
+        break;
+    default:
+        ++otherCnt;
+        break;
+}
+```
+
+> 即使不准备在default标签下做任何工作，定义一个default语句也是有用的。其目的在与告诉程序的读者，我们已经考虑到了默认的情况，只是目前什么也没做
+
+标签不应该孤零零的出现，它后面必须跟上一条语句或者另外一个case标签。如果switch结构以一个空的default标签作为结束，则该default标签后必须跟上一个空语句或者空块。
+
+switch内部的变量定义
+
+如前所述，switch的执行流程有时可能会跨过某些case标签。如果程序跳转到了某个特定的case，则switch结构中该case之前的部分会被忽略掉。这部分代码的行为引出了一个有趣的问题：被忽略过的代码中含有变量的定义怎么办？
+
+答案是：如果在某处一个带有初值的变量位于作用域之外，在另一处该变量位于作用域之内，则从前一处跳到后一处的行为是非法行为
+
+```c++
+case true:
+	// 因为程序的执行流程可能绕开下面的初始化语句，所以该switch语句不合法
+	string file_name; // 错误：控制流绕过一个隐式初始化的变量
+	int ival = 0; // 错误：控制流绕过一个显式初始化的变量
+	int jval; // 正确：因为jval没有初始化
+	break;
+case false:
+	// 正确：jval虽然在作用域内，但是它没有被初始化
+	jval = next_num(); //正确，给jval赋一个值
+	if (file_name.empty()) // file_name在作用域内，但是没有被初始化
+        // ...
+```
+
+假设上述代码合法，则一旦控制流直接跳到false分支，也就同时略过了变量file_name和ival的初始化过程。此时这两个变量在作用域之内，跟在false之后的代码试图在尚未初始化的情况下使用他们，这显然是行不通的。因此C++规定，不允许跨过变量的初始化语句直接跳转到该变量作用域内的另一个位置。
+
+如果需要为某个case分支定义并初始化一个变量，我们应该把变量定义在块内，从而确保后面的case标签都在变量的作用域之外。
+
+```c++
+case true:
+	{
+        // 正确，声明语句位于语句块内部
+    	string file_name;
+	}
+	break;
+case false:
+	if (file_name.empty()) // 错误：file_name不在作用域内
+```
+
+### 5.4 迭代语句
+
+aeiou AE	IOU
+
+haiflhafhafi
