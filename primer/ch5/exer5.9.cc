@@ -14,7 +14,7 @@ int main()
     char ch;
     bool fFlag = false;
     while ((ch = getchar()) != -1) {
-        flag = fFlag;
+        bool flag = fFlag;
         switch (ch) {
             case 'f':
                 if (!fFlag) {
@@ -75,6 +75,8 @@ int main()
                 ++other;
                 break;
         }
+        if (flag)
+            fFlag = false;
     }
     cout << "a/A:\t" << a << endl;
     cout << "e/E:\t" << e << endl;
