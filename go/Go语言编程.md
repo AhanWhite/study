@@ -657,3 +657,832 @@ Go提供了数组切片(slice)来满足数组的不足。
 1、创建数组切片
 
 创建数组切片的方法主要有两种——基于数组和直接创建。
+
+基于数组
+
+数组切片可以基于一个已存在的数组创建。数组切片可以只使用数组的一部分元素或者整个数组来创建。下述代码演示基于一个数组的前5个元素创建一个数组切片
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	// 定义一个数组
+	var myArray [10]int = [10]int{1,2,3,4,5,6,7,8,9,0}
+	// 基于数组创建一个数组切片
+	var mySlice []int = myArray[:5]
+
+	fmt.Println("Elements of myArray: ")
+	for _, v := range myArray {
+		fmt.Print(v, " ")
+	}
+	fmt.Println("\nElements of mySlice")
+	for _, v := range mySlice {
+		fmt.Print(v, " ")
+	}
+}
+```
+
+输出
+
+>Elements of myArray: 
+>1 2 3 4 5 6 7 8 9 0 
+>Elements of mySlice
+>1 2 3 4 5 
+
+Go支持用myArray[first:last]这样的方式来基于数组生成一个数组切片，而且这个用法还很灵活，比如下面几种都是合法的
+
+```go
+// 基于所有元素切片
+mySlice = myArray[:]
+// 基于前5个元素
+mySlice = myArray[:5]
+// 基于从第5个开始的所有元素
+mySlice = myArray[5:]
+```
+
+直接创建
+
+并非一定要事先准备一个数组才能创建数组切片。Go语言提供的内置函数make()可以用于灵活的创建数组切片。下面的例子演示了直接创建数组切片的方法。
+
+```go
+// 创建一个初始元素个数为5的数组切片，元素初始值为0
+mySlice1 := make([]int, 5)
+// 创建一个初始元素个数为5的数组切片，元素初始值为0，并预留10个元素的存储空间
+mySlice1 := make([]int, 5, 10)
+// 直接创建并初始化包含5个元素的数组切片
+mySlice1 := []int{1,2,3,4,5}
+// 当然这种方法创建事实上还有一个匿名函数会被创建出来，只是不需要我们来操心
+```
+
+2、元素遍历
+
+操作数组元素的所有方法都适用于数组切片，比如数组切片也可以按下标读写元素，用len()函数获取元素个数，并支持使用range关键字来快速遍历所有元素
+
+传统遍历
+
+```go
+for i := 0; i <len(mySlice); i++ {
+    fmt.Println("mySlice[",i,"] = ",mySlice[i])
+}
+```
+
+使用range可以让遍历代码显得更整洁。range表达式由两个返回值，一个是索引，第二个是元素的值
+
+```go
+for i, v := range mySlice {
+    fmt.Println("mySlice[",i,"] = ",v)
+}
+```
+
+3、动态增减元素
+
+与数组相比，数组切片多了一个存储能力的概念，即元素个数与分配的空间可以是两个不同的值。合理的设置存储能力的值，可以大幅降低数组切片内部重新分配内存和搬送内存块的概率，从而大大提高程序性能。
+
+假如你明知道当前创建的数组切片最多可能需要存储的元素个数是50，那么如果你存储能力小于50，比如20，那么在元素超过20时，底层至少会发生一次这样的动作——重新分配一块"够大"的内存，并且需要把内容由原来的内存块复制到新分配的内存块，这会产生比较明显的开销。给"够大"这两个字加上引号的原因是系统并不知道多大是够大明所以只是一个简单的猜测。比如，将原有的内存空间扩大两倍，但两倍不一定够，所以之前提到的内存重新分配和内容赋值的过程很可能发生多次，从而明显降低系统的整体性能。但如果你知道最大是50而且一开始设置存储能力是50，那么之后就不会发生这样耗费cpu的动作，从而达到用空间换时间的效果。
+
+数组切片支持Go语言内置的cap()函数和len()函数。cap()函数返回的是数组切片分配的空间大小，而len()函数返回的是数组切片中当前所存储的元素个数
+
+```go
+mySlice := make([]int, 5, 10)
+
+fmt.Println("len(mySlice): ", len(mySlice))
+fmt.Println("cap(mySlice): ", cap(mySlice))
+```
+
+输出
+
+> len(slice2):  5
+> cap(slice2):  10
+
+新增元素可以使用append()函数。
+
+```go
+mySlice = append(mySlice, 1, 2, 3)
+```
+
+append的第二个参数其实是一个不定参数，可以按需求添加若干个元素。甚至直接将一个数组切片追加到另一个数组切片的末尾。
+
+```go
+mySlice2 := []int{8,9,10}
+// 给mySlice添加另一个数组切片
+mySlice = append(mySlice, mySlice2...)
+```
+
+需要注意的是，我们在第二个参数mySlice2后面加了3个点，即一个省略号，如果没有这个省略号的话，会产生编译错误，因为按append的语义，当从第二个参数起的所有参数都是待附加的元素。因为mySlice中的元素类型是int，所以直接传递mySlice2是行不通的。加上省略号相当于把mySlice2包含的所有元素打散后传入。
+
+上述调用等同于：
+
+```go
+mySlice = append(myslice, 8,9,10)
+```
+
+数组切片会自动处理存储空间不足的问题。如果追加的内容长度超过当前已分配的存储空间，即cap调用返回的信息，数组切片会自动分配一块足够大的内存。
+
+4、基于数组切片创建数组切片
+
+类似于数组切片可以基于一个数组创建，数组切片也可以基于另一个数组切片创建。
+
+```go
+oldSlice := []int{1,2,3,4,5}
+newSlice := oldSlice[:3]
+```
+
+有意思的是，选择的oldSlice范围甚至可以超过所包含的元素个数，只要不超过oldSlice的存储能力(即cap返回的值)，那么这个创建就是合法的。超过元素个数的部分都会填上0.
+
+5、内容复制
+
+数组切片支持Go的另一个内置函数copy()，用于将内容从一个数组切片复制到另一个数组切片。如果加入的两个数组切片不一样大，就会按其中较小的数组的元素个数进行复制
+
+```go
+slice1 := []int{1,2,3,4,5}
+slice2 := []int{5,4,3}
+copy(slice2, slice1) // 只会复制slice1的前3个元素到slice2中
+copy(slice1, slice2) // 只会复制slice2的3个元素到slice1的前3个位置
+```
+
+#### 2.3.9 map
+
+在C++/Java中，map一般以库的形式出现，比如C++是STL的std::map<>，在java中是Hashmap<>，在这些语言中使用map需要事先导包，Go语言不用。
+
+map是一堆键值对的未排序集合。比如以身份证号作为唯一键来标识一个人的信息，则这个map可以定义为如下代码
+
+```go
+package main
+
+import "fmt"
+
+// PersonInfo PersonInfo是一个包含个人信息的类型
+type PersonInfo struct {
+	ID string
+	Name string
+	Address string
+}
+
+func main() {
+	var personDb map[string] PersonInfo
+	personDb = make(map[string]PersonInfo)
+	// 往这个map里插入几条数据
+	personDb["12345"] = PersonInfo{"12345", "Tom", "Room 12345"}
+	personDb["1"] = PersonInfo{"1", "Jack", "Room 1"}
+
+	// 查询
+	person, ok := personDb["1234"]
+	// ok是bool类型，true代表找到了对于的数据
+	if ok {
+		fmt.Println("找到了这个人：", person.Name)
+	} else {
+		fmt.Println("没找到这个人")
+	}
+}
+```
+
+1、变量声明
+
+map的声明基本上没有多余的元素
+
+```go
+var myMap map[string] PersonInfo
+```
+
+myMap是声明的map变量名，string是键的类型，PersonInfo则是其所存放的值类型。
+
+2、创建
+
+我们可以是使用Go语言内置的函数make()来创建一个新map。下面这个例子创建了一个键类型为string、值类型为PersonInfo的map。
+
+```go
+myMap = make(map[string] PersonInfo)
+// 也可以指定初始存储能力
+myMap = make(map[string] PersonInfo， 100)
+```
+
+创建并初始化map的代码如下
+
+```go
+mymap = map[string] PersonInfo{
+    PersonInfo{"12345", "Tom", "Room 12345"},
+}
+```
+
+3、元素赋值
+
+```go
+personDb["12345"] = PersonInfo{"12345", "Tom", "Room 12345"}
+```
+
+4、元素删除
+
+Go语言提供了一个内置函数delete()，用于删除容器内的元素。
+
+```go
+delete(myMap, "1234")
+```
+
+如果键不存在，调用什么也不会发生，也不会有什么副作用。但是如果传入的map变量的值是nil，会导致程序抛出异常panic
+
+5、元素查找
+
+Go语言在map中查找一个特定的键
+
+```go
+value, ok := myMap["1234"]
+if ok {
+    // 找到了，进行处理
+}
+```
+
+判断是否成功找到特定的键，不需要检查取到的值是否为value，只需要看第二个返回值ok。
+
+### 2.4 流程控制
+
+流程控制语句一般起一下三个作用：
+
+- 选择 根据条件跳转到不同的执行序列
+- 循环 根据条件反复执行某个序列。当然每次循环执行的输入输出可能有变化
+- 跳转 根据条件返回到某执行序列
+
+Go语言支持以下几种流程控制语句
+
+- 条件语句 对应的关键字为if、else和else if
+- 选择语句 对应的关键字为switch、case和select
+- 循环语句 对应的关键字为for和range
+- 跳转语句 对应的关键字为goto
+
+在具体的应用场景中，害添加了如下关键字：break、continue和fallthrough。
+
+#### 2.4.1 条件语句
+
+```go
+if a < 5 {
+    return 0
+} else {
+    return 1
+}
+```
+
+关于条件语句，需要注意：
+
+- 条件语句不需要使用括号将条件括起来()
+
+- 无论语句体内有几条语句，花括号{}必须存在
+
+- 左花括号{必须与if或else处于同一行
+
+- 在if之后，条件语句之前，可以添加变量初始化语句，使用;间隔
+
+- 在有返回值的函数中，不允许将"最终的"return语句包含在if...else...结构中，否则编译失败：
+
+  > function ends without a return statement
+
+  失败的原因在于，Go编译器无法找到终止该函数的return语句。编译失败的案例如下：
+
+  ```go
+  func example(x int) int {
+      if x == 0 {
+          return 5
+      } else {
+          return x
+      }
+  }
+  ```
+
+#### 2.4.2 选择语句
+
+根据传入条件的不同，选择语句会执行不同的语句，下面的例子根据传入的整型变量i的不同而打印不同的内容：
+
+```go
+switch i {
+    case 0:
+    	fmt.Printf("0")
+    case 1:
+    	fmt.Printf("1")
+    case 2:
+    	fallthrough
+    case 3, 4, 5, 6:
+    	fmt.Printf("3,4,5,6")
+    default:
+    	fmt.Printf("Default")
+}
+```
+
+输出
+
+>i = 0, 输出0
+>
+>i = 1, 输出1
+>
+>i = 2, 输出3,4,5,6
+>
+>i = 3/4/5/6, 输出3,4,5,6
+>
+>i = 其他，输出Default
+
+比较有意思的是，switch后面的表达式甚至不是必须的，比如
+
+```go
+switch {
+    case 0 <= Num && Num <=3:
+    	fmt.Printf("0-3")
+    case 4 <= Num && Num <=6:
+    	fmt.Printf("4-6")
+    case 7 <= Num && Num <=9:
+    	fmt.Printf("7-9")
+}
+```
+
+使用switch需要注意：
+
+- 左花括号{必须和switch同一行
+- 条件表达式不限制为常量或者整数
+- 单个case中，可以出现多个结果或选项
+- 与C语言相反，Go不需要用break来明确退出一个case
+- 只要在case中明确添加fallthrough关键字，才会继续执行紧跟的下一个case
+- 可以不设定switch之后的条件表达式，在这种情况下，整个switch结构与多个if...else...的逻辑作用等同
+
+#### 2.4.3 循环语句
+
+Go只支持for关键字，而不支持while和do-while结构。关键字for的基本使用方法和C/C++非常接近
+
+```go
+sum := 0
+for i := 0; i<10; i++ {
+    sum += i
+}
+```
+
+for后面的条件表达式不需要用圆括号()抱起来。Go的无限循环直接简化为:
+
+```go
+sum := 0
+for {
+    sum++
+    if sum > 1000 {
+        break
+    }
+}
+```
+
+在条件表达式中也支持多重赋值，如下所示
+
+```go
+a := []int{1,2,3,4,5,6}
+for i,j := 0, len(a) - 1; i < j; i, j=i+1, j-1 {
+    a[i], a[j] = a[j], a[i]
+}
+```
+
+使用循环语句时，需要注意
+
+- 左花括号，必须和for同一行
+
+- Go的for循环与C语言一样，都允许在循环条件中定义和初始化变量，唯一的区别是，Go不支持以逗号为间隔的多个赋值语句，必须使用平行赋值的方式来初始化多个变量
+
+- Go语言的for循环同样支持continue和break来控制循环，但是它提供了一个更高级的功能break，可以选择中断哪一个循环，如下
+
+  ```go
+  JLoop:
+  // ...
+  for j := 0; j < 5; j++ {
+      for i := 0; i < 10; i++ {
+          if i > 5 {
+              break JLoop
+          }
+          fmt.Println(i)
+      }
+  }
+  ```
+
+  本例中，break语句终止的是JLoop标签处的外层循环。
+
+#### 2.4.4 跳转语句
+
+goto语句的语义非常简单，就是跳转到本函数内的某个标签
+
+```go
+func myfunc(){
+    i := 0
+    HERE:
+    fmt.Println(i)
+    i++
+    if i < 10 {
+        goto HERE
+    }
+}
+```
+
+### 2.5 函数
+
+函数构成代码的逻辑结构。在Go语言中，函数的基本组成为：关键字func、函数名、参数列表、返回值、函数体和返回语句
+
+#### 2.5.1 函数定义
+
+加法函数
+
+```go
+package mymath
+import "errors"
+
+func Add(a int, b int) (ret int, err error) {
+    if a < 0 || b < 0 { // 假设这个函数只支持两个非负数字的加法
+        err = errors.New("Should be non-negative numbers!")
+        return
+    }
+    return a + b, nil // 支持多重返回值
+}
+```
+
+如果参数列表中若干个相邻类型的参数相同，比如上面的a和b，则可以在参数列表中省略前面变量的类型声明
+
+```go
+func Add(a, b int) (ret int, err error) {
+    // ...
+}
+```
+
+如果返回值列表也是多个类型相同，也可以用同样的方式合并
+
+如果函数只有一个返回值，也可以这么写
+
+```go
+func Add(a, b int) int {
+    // ...
+}
+```
+
+#### 2.5.2 函数调用
+
+函数调用非常简单，只要事先导入了函数所在的包没救可以直接按照下列方式调用函数
+
+```go
+import "mymath"
+
+c := mymath.Add(1, 2)
+```
+
+小写字母开头的函数只在本包内可见，大写字母开头的函数才能被其他包使用。这个规则也适用于类型和变量的可见性。
+
+#### 2.5.3 不定参数
+
+1、不定参数类型
+
+不定参数就是指函数传入的参数个数为不定数量。为了做到这点，首先需要将函数定义为接收不定参数类型
+
+```go
+func myfunc(args ...int) {
+    for _, arg := range args {
+        fmt.Println(arg)
+    }
+}
+```
+
+myfunc函数接收不定数量的参数，这些参数的类型全部是int，所以它可以用如下方式调用。
+
+```go
+myfunc(2,3,4)
+myfunc(1,2,4,5)
+```
+
+形如...type格式的类型只能作为函数的参数类型存在，而且必须是最后一个参数。他是一个语法糖，即这种语法对语言的功能没有影响，但是更方便程序员使用。
+
+从内部实现机理来说，类型...type本质上是一个数组切片，也就是[]type，这也是为什么上面的参数args可以用for循环来获取每个传入的参数。
+
+2、不定参数的传递
+
+假设有另一个变参函数myfunc3(args ...int)，下面例子演示如何向其传递变参。
+
+```go
+func myfunc(args ...int) {
+    // 按原样传递
+    myfunc3(args...)
+    // 传递片段，实际上任意的int slice都可以传进去
+    myfunc3(args[1:]...)
+}
+```
+
+3、任意类型的不定参数
+
+之前的例子中将不定参数类型约束为int，如果你希望传任意类型，可以指定类型为interface{}。下面是Go语言标准库中fmt.Printf()的函数原型
+
+```go
+func Printf(format string, args ...interface{}) {
+    // ...
+}
+```
+
+用interfaceP{}传递任何类型数据是Go语言的惯例用法。使用interfaceP{}仍是类型安全的，这和C/C++不太一样。下例演示了如何分派传入interfaceP{}类型的数据
+
+```go
+package main
+
+import "fmt"
+
+func MyPrintf(args ...interface{}) {
+	for _, arg := range args {
+		switch arg.(type) {
+		case int:
+			fmt.Println(arg, "is a int value.")
+		case string:
+			fmt.Println(arg, "is a string value.")
+		case int64:
+			fmt.Println(arg, "is a int64 value.")
+		default:
+			fmt.Println(arg, "is a unkown value.")
+		}
+	}
+}
+
+func main() {
+	var v1 int = 1
+	var v2 int64 = 234
+	var v3 string = "hello"
+	var v4 float64 = 1.234
+
+	MyPrintf(v1, v2, v3, v4)
+}
+```
+
+输出
+
+> 1 is a int value.
+> 234 is a int64 value.
+> hello is a string value.
+> 1.234 is a unkown value.
+
+#### 2.5.4 多返回值
+
+Go的函数或者成员的方法可以有多个返回值。
+
+比如File.Read()函数，就可以同时返回读取的字节数和出错信息。如果成功则返回值n为读取的字节，err为nil，否则err为具体的出错信息。
+
+```go
+func (file *File) Read(b []type) (n int, err Error)
+```
+
+同时，从上面的方法原型可以看到，我们还可以给返回值命名，就行函数的输入参数一样。返回值被命名之后，他们的值在函数开始的时候就自动初始化为空。在函数中执行不带任何参数的return语句时，会返回对于的返回值变量的值。
+
+如果调用方调用了一个具有多个返回值的方法，但是却不想关心其中的某个返回值，可以简单的用一个下划线"_"来跳过这个返回值，比如：
+
+```go
+n, _ := f.Read(buf)
+```
+
+#### 2.5.5 匿名函数与闭包
+
+匿名函数是指不需要定义函数名的一种函数实现方式。
+
+1、匿名函数
+
+在Go里面，函数可以像普通变量一样被传递或使用，这与C语言的回调函数比较类似。不同的是，Go语言支持随时在代码里定义匿名函数。
+
+匿名函数由一个不带函数名的函数声明和函数体组成，如下
+
+```go
+func(a, b int, z float64) bool {
+    return a * b < int(z)
+}
+```
+
+匿名数可以直接赋值给一个变量或者直接执行
+
+```go
+f := func(x, y int) int {
+    return x + y
+}
+func(ch chan int){
+    ch <- ACK
+}(reply_chan) // 花括号直接跟参数列表表示函数调用
+```
+
+2、必报
+
+Go的匿名函数是一个闭包。
+
+基本概念
+
+闭包可以包含自由(未绑定到特定对象)变量的代码块，这些变量不在这个代码块内或任何全局上下文定义，而是在定义代码块的环境中定义。要执行的代码块(由于自由变量包含在代码块中，所以这些自由变量以及他们引用的对象没有被释放)为自由变量提供绑定的计算环境(作用域)
+
+闭包的价值
+
+闭包的价值在于可以作为函数对象或者匿名函数，对于类型系统而言，这意味着不仅要表示数据还要表示代码。支持闭包的多数语言都将函数作为第一级对象，就是说这些函数可以存储到变量中作为函数传递给其他函数，最重要的是能够被函数动态创建和返回。
+
+Go语言中的闭包
+
+Go语言中的闭包同样会引用到函数外的变量。闭包的实现确保只要闭包还被使用，那么被闭包引用的变量会一直存在,如代码所示
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var j int = 5
+	a := func() func() {
+		var i int = 10
+		return func() {
+			fmt.Printf("i, j: %d, %d\n", i, j)
+		}
+	}() // 加()执行匿名函数，a被赋值为匿名函数返回的函数
+	a()
+	j *= 2
+	a()
+}
+```
+
+输出
+
+>i, j: 10, 5
+>i, j: 10, 10
+
+变量a指向的闭包函数引用了局部变量i和j，i的值被隔离，在闭包外不能被修改，改变j的值以后，再次调用a，发现结果是修改过的值。
+
+在变量a指向的闭包函数中，只有内部的匿名函数才能访问变量i，而无法通过其他途径访问到，因此保证了i的安全性。
+
+### 2.6 错误处理
+
+#### 2.6.1 error接口
+
+Go引入了一个关于错误处理的标准模式，即error接口，该接口的定义如下
+
+```GO
+type error interface {
+    Error() string
+}
+```
+
+对于大多数函数，如果要返回错误，大致上都可以定义为如下模式，将error作为多种返回值中的最后一个，但这并非是强制要求：
+
+```go
+func Foo(param int) (n int, err error) {
+    // ...
+}
+```
+
+调用时的代码建议按如下方式处理错误情况
+
+```go
+n, err := Foo(0)
+if err != nil {
+    // 错误处理
+} else {
+    // 使用返回值n
+}
+```
+
+示范如何使用自定义的error类型
+
+首先，定义一个用于承载错误信息的类型。因为Go语言中接口的灵活性，根本不需要从error接口继承或者像Java一样需要使用implements来明确执行类型与接口之间的关系，具体代码如下
+
+```go
+type PathError struct {
+    Op		string
+    Path	string
+    Err		error
+}
+```
+
+但是如果这样的话，编译器怎么知道PathError可以当一个error来传递呢？关键在于下面的代码实现了Error()方法
+
+```go
+func (e *PathError) Error() string {
+    return e.Op + " " + e.Path + ": " + e.Err.Error()
+}
+```
+
+关于接口的更多细节，参加3.5节。之后就可以返回PathError变量了。比如下面当syscall.Stat()失败返回err时，将该err包装到一个PathError对象中返回：
+
+```go
+func Stat(name string) (fi FileInfo, err error) {
+    var stat syscall.Stat_t
+    err = syscall.Stat(name, &stat)
+    if err != nil {
+        return nil, &PathError{"stat", name, err}
+    }
+    return fileInfoFormStat(&stat, name), nil
+}
+```
+
+如果在处理错误时获取详细信息，而不仅仅满足于打印一句错误信息，那就需要用到类型转换只是了：
+
+```go
+fi, err := os.Stat("a.txt")
+if err != nil {
+    if e, ok := err.(*os.PathError); ok && e.Err != nil {
+        // 获取PathError类型变量e中的其他信息进行处理
+    } 
+}
+```
+
+#### 2.6.2 defer
+
+关键字defer是Go语言引入的一个非常有意思的特性，相信C++程序员很多写多类似下面这样的代码
+
+```c++
+class file_closer {
+    FILE _f;
+    public:
+    file_closer(FILE f) : _f(f) {}
+    ~file_closer() {if (f) fclose(f);}
+};
+```
+
+然后再需要的地方这么写
+
+```c++
+void f() {
+    FILE f = open_file("file.txt");//打开一个文件句柄
+    file_closer _closer(f);
+    // 对f句柄进行操作
+}
+```
+
+为什么需要file_closer这么个包装类呢？因为如果没有这个类，代码中所有退出函数的环节，比如每一个可能抛出异常的地方，每一个return的位置，都需要关掉之前打开的文件句柄。即使你头脑清晰，想明白了每一个分支和可能出错的条件，在该关闭的地方都关闭了，怎么保证你的后继者也能做到同样水平？大量莫名其妙的问题就出现了。
+
+在C/C++中海油另一种解决方案。开发者可以将需要释放的资源变量都声明在函数的开头部分，并在函数的末尾部分统一释放资源。函数需要退出时，就必须用goto语句跳转到指定位置先完成资源清理工作，而不能调用return语句直接返回。
+
+这种方案也是可行的，也仍然在被使用着，但存在非常大的维护性问题。而Go语言使用defer关键字简简单单解决了这个问题，比如
+
+```go
+func CopyFile(dst, src string) (w int64, err error) {
+    srcFile, err := os.Open(src)
+    if err != nil {
+        return
+    }
+    defer srcFile.Close()
+    
+    dstFile, err := os.Create(dstName)
+    if err != nil {
+        return
+    }
+    defer dstFile.Clos()
+    return io.Copy(dstFile, srcFile)
+}
+```
+
+即使其中的Copy函数抛出异常，Go仍然会保证dstFile, srcFile会被正常关闭。
+
+如果的一句话干不完清理工作，也可以使用在defer后加一个匿名函数的做法
+
+```go
+defer func() {
+    // 复杂清理工作
+}()
+```
+
+一个函数中可以存在多个defer语句，因此需要注意的是，defer语句的调用是遵照先进后出的原则，即最后一个defer语句将最先执行。
+
+#### 2.6.3 panic()和recover()
+
+ Go语言引入了两个内置函数panic和recover来报告和处理运行时错误和程序中的错误场景：
+
+```go
+func panic(interface{})
+func recover() interface{}
+```
+
+当一个函数执行过程中调用panic函数时，正常的函数执行流程将立即终止，但函数中之前使用defer关键字延迟执行的语句将正常展开执行，之后该函数将返回到调用函数，并导致逐层向上执行panic流程，直至所述的goruntine中所有正在执行的函数被终止。错误信息将被报告，包括在调用panic()函数时传入的参数，这个过程称为错误处理流程。
+
+从panic的参数类型interface{}我们可以得知，该函数接收任意类型的数据，比如整型、字符串、对象等。调用方法很简单，下面为几个例子
+
+```go
+panic(404)
+panic("network broken")
+panic(Error("file not exists"))
+```
+
+recover()函数用于终止错误处理流程，一般情况下，recover()应该在一个使用defer关键字的函数中执行有效截取错误处理流程。如果在没有发生异常的goruntine中明确调用恢复过程，使用recover关键字，会导致该goruntine所属的进程打印异常信息后直接退出
+
+以下为一个常见场景。
+
+我们对foo()函数的只需要么心里没底感觉可能会除法错误处理，或者自己再其中明确加入了特定条件除法错误处理的语句，那么可以用如下方式在调用代码中截取recover():
+
+```go
+defer func() {
+    if r := recover(); r != nil {
+        log.Printf("Runtime error caught: %v", r)
+    }
+} ()
+foo()
+```
+
+无论foo中是否触发了错误处理流程，该匿名defer函数都将在函数退出时得到执行。加入foo()中触发了错误处理流程，recover函数执行将使得该错误处理过程终止。如果错误处理流程被触发时，程序传给panic函数的参数不为nil，则该函数还会打印详细的错误信息。
+
+### 2.7 完整示例
+
+本节想要实现一个完整的程序。准备开发一个排序算法的比较程序，从命令行指定输入的数据文件和输出的数据文件，并指定对于的排序算法，该程序的用法如下所示：
+
+> USAEG: sorter -i \<in\> -o \<out\> -a \<qsort|bubblesort\>
+
+一个具体的执行过程如下
+
+> $ ./sorter -I in.dat -o out.dat -a qsort
+>
+> The sorting process costs 10us to complete.
+
+当然，输入不合法应该给出对于的提示。
+
+#### 2.7.1 程序结构
+
+
+
