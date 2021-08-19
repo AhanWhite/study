@@ -11,8 +11,9 @@ mkdir -p ${project_path}/build
 
 filename=$1
 build=$(echo $1 | sed 's=.cc==g')
+shift
 
-g++ -o ../build/$build $filename
+g++ -o ../build/$build $filename $@
 ```
 
 - run code
@@ -20,8 +21,9 @@ g++ -o ../build/$build $filename
 ahan@white:/study/primer$ cat /usr/bin/rprimer 
 filename=$1
 build=$(echo $1 | sed 's=.cc==g')
+shift
 
-../build/$build
+../build/$build $@
 ```
 
 You need to enter the code directory of each chapter to execute the script.
